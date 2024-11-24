@@ -1,9 +1,10 @@
+import 'package:connections/edit_connections.dart';
 import 'package:connections/models.dart';
 import 'package:connections/ui_components/word_button.dart';
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(const MaterialApp(home: MainApp()));
 }
 
 class MainApp extends StatefulWidget {
@@ -60,24 +61,25 @@ class _MainAppState extends State<MainApp> {
       ),
     );
 
-    wordList.addAll(sampleGroup.easyGroup.words);
-    wordList.addAll(sampleGroup.mediumGroup.words);
-    wordList.addAll(sampleGroup.hardGroup.words);
-    wordList.addAll(sampleGroup.extraHardGroup.words);
+    initializeWords();
 
-    wordList.shuffle();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    for (var group in sampleGroup.easyGroup.words) {
+      debugPrint(group.word);
+    }
     List<Widget> wordButtons = [];
 
     bool canSelectMore = selectedWords.length < 4;
 
     for (var word in wordList) {
+      debugPrint("word ${word.word}");
       wordButtons.add(
         WordButton(
+          key: UniqueKey(),
           isSelected: selectedWords.contains(word),
           onPressed: () {
             if (!selectedWords.contains(word) && canSelectMore) {
@@ -103,6 +105,10 @@ class _MainAppState extends State<MainApp> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              TextButton(
+                  onPressed: () => showEditDialog(setState),
+                  child: const Text("Edit connections")),
+              const SizedBox(height: 50),
               SizedBox(
                 width: 600,
                 height: 600,
@@ -150,5 +156,43 @@ class _MainAppState extends State<MainApp> {
     }
 
     return wordTypes.toSet().length == 1;
+  }
+
+  void showEditDialog(StateSetter parentState) {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return SimpleDialog(
+          children: [
+            EditConnections(
+              currentConnections: sampleGroup,
+              setParentState: parentState,
+              updateCurrentConnections: (newGroup) {
+                // for (var group in newGroup.easyGroup.words) {
+                //   debugPrint(group.word);
+                // }
+                parentState(() {
+                  sampleGroup = newGroup;
+                  initializeWords();
+
+                  debugPrint("carly new group");
+                  Navigator.of(context).pop();
+                });
+              },
+            )
+          ],
+        );
+      },
+    );
+  }
+
+  void initializeWords() {
+    wordList = [];
+    wordList.addAll(sampleGroup.easyGroup.words);
+    wordList.addAll(sampleGroup.mediumGroup.words);
+    wordList.addAll(sampleGroup.hardGroup.words);
+    wordList.addAll(sampleGroup.extraHardGroup.words);
+
+    wordList.shuffle();
   }
 }
